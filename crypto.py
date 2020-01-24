@@ -13,10 +13,9 @@ from datetime import datetime
 from binance.client import Client
 import pandas as pd
 from datetime import datetime, timedelta
+import matplotlib.pyplot as plt
 
 
-data = 0
-invest = [[],[],[]]
 
 
 
@@ -91,10 +90,10 @@ def find_trade(invest, coin_list, period):
         df, data = stoch_rsi(df, 14, data)
         # print(df)
 
-        if df.at[len(data)-1, "RSI"] < 50:
+        if df.at[len(data)-1, "RSI"] < 30:
          invest[0].append(coin)
 
-        if df.at[len(data)-1, "StochRSI"] < 30:
+        if df.at[len(data)-1, "StochRSI"] < 15:
          invest[2].append(coin)
 
     return invest
@@ -150,134 +149,65 @@ def stoch_rsi(df, period, data):
         df.at[i + period-1, "StochRSI"] = (df.at[i + period-1, "RSI"] - low)/ (high - low)*100
     return df, data
 
+def plot_coin(coin_list):
+    
 
+ for coin in coin_list:
+    try:
+        klines = client.get_historical_klines(coin, Client.KLINE_INTERVAL_1DAY, "60 day ago UTC")
+    except Exception:
+        continue
+
+    klines_data = pd.DataFrame(np.array(klines))
+
+    x = klines_data.index.values[::-1]
+    y = klines_data[4].apply(lambda x: float(x))
+
+    # creating the canvas 
+    fig = plt.figure() 
+    
+    # setting size of first canvas 
+    axes1 = fig.add_axes([0, 0, 0.7, 1]) 
+
+    # remove right and top border
+    axes1.spines['top'].set_visible(False)
+    axes1.spines['right'].set_visible(False)
+
+    # name the labels
+    axes1.set_xlabel('Index', fontsize=20)
+    axes1.set_ylabel('Value',fontsize=20)
+    
+    # plotting graph of first canvas 
+    axes1.plot(x, y) 
+   
+    axes1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
+    axes1.legend(bbox_to_anchor=(1, 1), loc='best', borderaxespad=0. , prop={'size':10})
+    # displaying both graphs 
+    plt.show()
 if __name__ == "__main__":
 
 # Enter your api key and secret key here
-
     client = Client("","")
-    coin_list = ["ETHBTC",
-    "TRXBTC",
-    "IOSTBTC",
-    "ICXBTC",
-    "VENBTC",
-    "WTCBTC",
-    "XLMBTC",
-    "ELFBTC",
-    "CNDBTC",
-    "TNTBTC",
-    "XRPBTC",
-    "NEOBTC",
-    "BNBBTC",
-    "ADABTC",
-    "EOSBTC",
-    "TNBBTC",
-    "HSRBTC",
-    "LTCBTC",
-    "XVGBTC",
-    "RCNBTC",
-    "POEBTC",
-    "CDTBTC",
-    "NEBLBTC",
-    "IOTABTC",
-    "PIVXBTC",
-    "BCCBTC",
-    "BCDBTC",
-    "BATBTC",
-    "LENDBTC",
-    "VIBEBTC",
-    "MANABTC",
-    "OMGBTC",
-    "BRDBTC",
-    "MTLBTC",
-    "BTSBTC",
-    "RLCBTC",
-    "ENJBTC",
-    "GTOBTC",
-    "QTUMBTC",
-    "ETCBTC",
-    "SNGLSBTC",
-    "APPCBTC",
-    "AIONBTC",
-    "AMBBTC",
-    "SUBBTC",
-    "XMRBTC",
-    "FUNBTC",
-    "ZRXBTC",
-    "LSKBTC",
-    "SNTBTC",
-    "OAXBTC",
-    "INSBTC",
-    "PPTBTC",
-    "QSPBTC",
-    "ENGBTC",
-    "WINGSBTC",
-    "MDABTC",
-    "LRCBTC",
-    "GASBTC",
-    "BTGBTC",
-    "CTRBTC",
-    "STRATBTC",
-    "ARKBTC",
-    "POWRBTC",
-    "LINKBTC",
-    "WAVESBTC",
-    "TRIGBTC",
-    "WABIBTC",
-    "KNCBTC",
-    "DASHBTC",
-    "OSTBTC",
-    "REQBTC",
-    "SALTBTC",
-    "FUELBTC",
-    "KMDBTC",
-    "STORJBTC",
-    "ARNBTC",
-    "ZECBTC",
-    "MCOBTC",
-    "DLTBTC",
-    "LUNBTC",
-    "CMTBTC",
-    "EDOBTC",
-    "BQXBTC",
-    "ASTBTC",
-    "BCPTBTC",
-    "EVXBTC",
-    "RDNBTC",
-    "VIBBTC",
-    "MODBTC",
-    "GXSBTC",
-    "DNTBTC",
-    "NULSBTC",
-    "XZCBTC",
-    "NAVBTC",
-    "ADXBTC",
-    "YOYOBTC",
-    "DGDBTC",
-    "SNMBTC",
-    "GVTBTC",
-    "MTHBTC",
-    "ICNBTC",
-    "BNTBTC",
+    coin_list = ["ETHBTC","TRXBTC","IOSTBTC","ICXBTC","VENBTC","WTCBTC","XLMBTC","ELFBTC","CNDBTC","TNTBTC","XRPBTC",
+    "NEOBTC","BNBBTC","ADABTC","EOSBTC","TNBBTC","HSRBTC","LTCBTC","XVGBTC","RCNBTC","POEBTC","CDTBTC","NEBLBTC",
+    "IOTABTC","PIVXBTC","BCCBTC","BCDBTC","BATBTC","LENDBTC","VIBEBTC","MANABTC","OMGBTC","BRDBTC","MTLBTC","BTSBTC","RLCBTC","ENJBTC",
+    "GTOBTC","QTUMBTC","ETCBTC","SNGLSBTC","APPCBTC","AIONBTC","AMBBTC","SUBBTC","XMRBTC","FUNBTC","ZRXBTC","LSKBTC","SNTBTC","OAXBTC","INSBTC",
+    "PPTBTC","QSPBTC","ENGBTC","WINGSBTC","MDABTC","LRCBTC","GASBTC","BTGBTC","CTRBTC","STRATBTC","ARKBTC",
+    "POWRBTC","LINKBTC","WAVESBTC","TRIGBTC","WABIBTC","KNCBTC","DASHBTC","OSTBTC","REQBTC","SALTBTC","FUELBTC",
+    "KMDBTC","STORJBTC","ARNBTC","ZECBTC","MCOBTC","DLTBTC","LUNBTC","CMTBTC","EDOBTC","BQXBTC","ASTBTC",
+    "BCPTBTC","EVXBTC","RDNBTC","VIBBTC","MODBTC","GXSBTC","DNTBTC","NULSBTC","XZCBTC","NAVBTC","ADXBTC",
+    "YOYOBTC","DGDBTC","SNMBTC","GVTBTC","MTHBTC",
+    "ICNBTC","BNTBTC","DATABTC"
 
     ]
 
+    # coin_list = ["ETHBTC","TRXBTC", "MANABTC"]
+    
+    data = 0
+    invest = [[],[],[]]
 
-    #klines = client.get_historical_klines("TRXBTC", Client.KLINE_INTERVAL_1DAY, "60 day ago UTC")
-    #
-    #klines = np.array(klines)
-    #
-    #df = pd.DataFrame(data=klines, columns=["Open time", "Open", "High", "Low", "Close", "Volume",
-    #"Close time", "Quote asset volume", "Number of trades", "Taker buy base asset volume"
-    #, "Taker buy quote asset volume", "Ignore"])
-    #
-    #data = np.array(df["Close"])
-    #
-    #data = data.astype(np.float)
-    #""""data = [1,0,3,4,5,6,7,8,9,10,11,12,13,14]"""
-
-    # mov_ave(invest, 60)
     invest = find_trade(invest,coin_list, 14)
+    plot_coin(invest[2])
 
     #plt.plot(df["Close"])
     #plt.show()
