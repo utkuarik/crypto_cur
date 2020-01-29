@@ -4,18 +4,16 @@ Created on Fri Jan 19 19:16:22 2018
 
 @author: utkuarik
 """
-import dateparser
+# import dateparser
 import pytz
 import time
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
-from binance.client import Client
+# from binance.client import Client
 import pandas as pd
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
-
-
 
 
 
@@ -40,6 +38,7 @@ def rsif_calc(df, period, data):
     df.at[13, "RSI"] = 100*prof / (prof+defic)
 
     return df, data
+
 
 def rsi_calc(df, period, data):
 
@@ -91,10 +90,10 @@ def find_trade(invest, coin_list, period):
         # print(df)
 
         if df.at[len(data)-1, "RSI"] < 30:
-         invest[0].append(coin)
+         invest['RSI'].append(coin)
 
         if df.at[len(data)-1, "StochRSI"] < 15:
-         invest[2].append(coin)
+         invest['StochRSI'].append(coin)
 
     return invest
 
@@ -128,7 +127,7 @@ def mov_ave(invest, ma_period):
 
          if float(df.at[len(data) - 1, "Close"]) > ma:
 
-             invest[1].append(coin)
+             invest['MA'].append(coin)
 
     return print(invest)
 
@@ -150,7 +149,7 @@ def stoch_rsi(df, period, data):
     return df, data
 
 def plot_coin(coin_list):
-    
+
 
  for coin in coin_list:
     try:
@@ -204,10 +203,11 @@ if __name__ == "__main__":
     # coin_list = ["ETHBTC","TRXBTC", "MANABTC"]
     
     data = 0
-    invest = [[],[],[]]
-
+    invest = {'RSI':[], 'MA':[], 'StochRSI':[]}
+    
     invest = find_trade(invest,coin_list, 14)
-    plot_coin(invest[2])
+    print(invest['StochRSI'])
+    # plot_coin(invest['StochRSI'])
 
     #plt.plot(df["Close"])
     #plt.show()
