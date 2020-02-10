@@ -4,18 +4,27 @@ Created on Fri Jan 19 19:16:22 2018
 
 @author: utkuarik
 """
-# import dateparser
+import dateparser
 import pytz
 import time
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
-# from binance.client import Client
+from binance.client import Client
 import pandas as pd
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 
 
+def intersection(list1, list2):
+    intersect = []
+    liste_l = (len(list1) > len(list2)) * list1 + (len(list2) > len(list1)) * list2
+    liste_s = (len(list1) < len(list2)) * list1 + (len(list2) < len(list1)) * list2
+
+    for x in liste_s:
+        if x in liste_l:
+            intersect.append(x)
+    return intersect
 
 def rsif_calc(df, period, data):
 
@@ -206,7 +215,7 @@ if __name__ == "__main__":
     invest = {'RSI':[], 'MA':[], 'StochRSI':[]}
     
     invest = find_trade(invest,coin_list, 14)
-    print(invest['StochRSI'])
+    intersection(invest['RSI'], invest['StochRSI'])
     # plot_coin(invest['StochRSI'])
 
     #plt.plot(df["Close"])
