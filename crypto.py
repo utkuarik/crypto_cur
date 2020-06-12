@@ -3,6 +3,7 @@
 Created on Fri Jan 19 19:16:22 2018
 
 @author: utkuarik
+Project works with Binance Api and helps user to invest in investable coins
 """
 import dateparser
 import pytz
@@ -15,7 +16,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 
-
+# Utility function for finding intersection 
 def intersection(list1, list2):
     intersect = []
     liste_l = (len(list1) > len(list2)) * list1 + (len(list2) > len(list1)) * list2
@@ -26,13 +27,12 @@ def intersection(list1, list2):
             intersect.append(x)
     return intersect
 
+# RSIF Calculation
 def rsif_calc(df, period, data):
-
     prof = 0
     defic = 0
 
     for i in range (period - 1):
-
         if ( i > 0 ) & (data[i] > data[i - 1]):
              prof = prof + data[i] - data[i - 1]
 
@@ -42,36 +42,32 @@ def rsif_calc(df, period, data):
     prof = prof/period
     defic = defic/period
 
-    df.at[13,"prof"] = prof
-    df.at[13,"defic"] = defic
-    df.at[13, "RSI"] = 100*prof / (prof+defic)
+    df.at[period-1,"prof"] = prof
+    df.at[period-1,"defic"] = defic
+    df.at[period-1, "RSI"] = 100*prof / (prof+defic)
 
     return df, data
 
-
+# RSI Calculation
 def rsi_calc(df, period, data):
 
     for i in range (0, len(data) - period ):
-
         prof = 0
         defic = 0
-
-        prof = (13 * df.at[period - 1 + i, "prof"] + (data[i + period] > data[period +i - 1])*
-        (data[i + period] - data[period +i - 1]))/14
-
-        defic = (13 * df.at[period - 1 + i, "defic"] + (data[i + period] < data[period +i - 1])*
-        (data[i + period - 1] - data[period +i ]))/14
-
+        alfa = 1 / period  
+        prof = ((period -1) * df.at[period - 1 + i, "prof"] + (data[i + period] > data[period +i - 1])*
+        (data[i + period] - data[period +i - 1]))/period
+        defic = ((period-1) * df.at[period - 1 + i, "defic"] + (data[i + period] < data[period +i - 1])*
+        (data[i + period - 1] - data[period +i ]))/period
         df.at[i + period, "prof"] = prof
         df.at[i + period, "defic"] = defic
         df.at[i + period, "RSI"] = 100 - 100 / (1 + prof/defic)
     return df, data
 
-
+# Coin History
 def find_trade(invest, coin_list, period):
 
     for coin in coin_list:
-
         try:
             klines = client.get_historical_klines(coin, Client.KLINE_INTERVAL_1DAY, "60 day ago UTC")
         except Exception:
@@ -85,18 +81,12 @@ def find_trade(invest, coin_list, period):
         df = pd.DataFrame(data=klines, columns=["Open time", "Open", "High", "Low", "Close", "Volume",
         "Close time", "Quote asset volume", "Number of trades", "Taker buy base asset volume"
         , "Taker buy quote asset volume", "Ignore"])
-        print(coin)
+
         data = np.array(df["Close"])
         data = data.astype(np.float)
-
-
-        # print(df)
-        df, data = rsif_calc(df, 14,data)
-        # print(df)
-        df, data = rsi_calc(df, 14, data)
-        # print(df)
-        df, data = stoch_rsi(df, 14, data)
-        # print(df)
+        df, data = rsif_calc(df, period,data)
+        df, data = rsi_calc(df, period, data)
+        df, data = stoch_rsi(df, period, data)
 
         if df.at[len(data)-1, "RSI"] < 30:
          invest['RSI'].append(coin)
@@ -104,9 +94,9 @@ def find_trade(invest, coin_list, period):
         if df.at[len(data)-1, "StochRSI"] < 15:
          invest['StochRSI'].append(coin)
 
-    return invest
+    return invest,df
 
-
+# Moving average calculation
 def mov_ave(invest, ma_period):
     for coin in coin_list:
 
@@ -114,8 +104,6 @@ def mov_ave(invest, ma_period):
          klines = client.get_historical_klines(coin, Client.KLINE_INTERVAL_1DAY,
                                                "60 day ago UTC",
                                                )
-
-
          klines = np.array(klines)
 
          df = pd.DataFrame(data=klines, columns=["Open time", "Open", "High", "Low", "Close", "Volume",
@@ -123,14 +111,11 @@ def mov_ave(invest, ma_period):
         , "Taker buy quote asset volume", "Ignore"])
 
          data = np.array(df["Close"])
-
          data = data.astype(np.float)
-
          if(len(data)<60):
              continue
 
          for i in range (10):
-
              ma = ma + float(df.at[i + len(data) - 10, "Close"])
          ma = ma / 10
 
@@ -140,15 +125,13 @@ def mov_ave(invest, ma_period):
 
     return print(invest)
 
-
+# Stochastic RSI calculation
 def stoch_rsi(df, period, data):
 
     for i in range (0, len(data) - period+1 ):
-
         low = df.at[i, "RSI"]
         high = df.at[i, "RSI"]
         for j in range(period):
-
             if(low > df.at[i+j,"RSI"]):
                 low = df.at[i+j, "RSI"]
             if(high < df.at[i+j, "RSI"]):
@@ -157,6 +140,7 @@ def stoch_rsi(df, period, data):
         df.at[i + period-1, "StochRSI"] = (df.at[i + period-1, "RSI"] - low)/ (high - low)*100
     return df, data
 
+# Plot the coin list
 def plot_coin(coin_list):
 
 
@@ -196,7 +180,7 @@ if __name__ == "__main__":
 
 # Enter your api key and secret key here
     client = Client("","")
-    coin_list = ["ETHBTC","TRXBTC","IOSTBTC","ICXBTC","VENBTC","WTCBTC","XLMBTC","ELFBTC","CNDBTC","TNTBTC","XRPBTC",
+    coin_list = ["TRXBNB","ETHBTC","TRXBTC","IOSTBTC","ICXBTC","VENBTC","WTCBTC","XLMBTC","ELFBTC","CNDBTC","TNTBTC","XRPBTC",
     "NEOBTC","BNBBTC","ADABTC","EOSBTC","TNBBTC","HSRBTC","LTCBTC","XVGBTC","RCNBTC","POEBTC","CDTBTC","NEBLBTC",
     "IOTABTC","PIVXBTC","BCCBTC","BCDBTC","BATBTC","LENDBTC","VIBEBTC","MANABTC","OMGBTC","BRDBTC","MTLBTC","BTSBTC","RLCBTC","ENJBTC",
     "GTOBTC","QTUMBTC","ETCBTC","SNGLSBTC","APPCBTC","AIONBTC","AMBBTC","SUBBTC","XMRBTC","FUNBTC","ZRXBTC","LSKBTC","SNTBTC","OAXBTC","INSBTC",
@@ -205,18 +189,14 @@ if __name__ == "__main__":
     "KMDBTC","STORJBTC","ARNBTC","ZECBTC","MCOBTC","DLTBTC","LUNBTC","CMTBTC","EDOBTC","BQXBTC","ASTBTC",
     "BCPTBTC","EVXBTC","RDNBTC","VIBBTC","MODBTC","GXSBTC","DNTBTC","NULSBTC","XZCBTC","NAVBTC","ADXBTC",
     "YOYOBTC","DGDBTC","SNMBTC","GVTBTC","MTHBTC",
-    "ICNBTC","BNTBTC","DATABTC"
+    "ICNBTC","BNTBTC","DATABTC","GOBTC"
 
     ]
-
-    # coin_list = ["ETHBTC","TRXBTC", "MANABTC"]
     
     data = 0
     invest = {'RSI':[], 'MA':[], 'StochRSI':[]}
     
-    invest = find_trade(invest,coin_list, 14)
+    invest,df = find_trade(invest,coin_list, 6)
     intersection(invest['RSI'], invest['StochRSI'])
-    # plot_coin(invest['StochRSI'])
-
-    #plt.plot(df["Close"])
-    #plt.show()
+    print(invest)
+  
