@@ -1,4 +1,4 @@
-# crypto_cur
+# Crypto Currency Investable Coin Finder
 
 * When the script runs it will calculate the investable crypto coins regarding to financial indicators
 * Works with Binance API, therefore you need binance user and secret-key
